@@ -1,12 +1,12 @@
-# Usa a imagem oficial do Nginx
 FROM nginx:alpine
 
-# Remove a página padrão do Nginx
-RUN rm -rf /usr/share/nginx/html/*
+# Remove default config
+RUN rm /etc/nginx/conf.d/default.conf
 
-# Copia seus arquivos HTML e assets para a pasta padrão do Nginx
+# Adiciona novo config com porta 8080
+RUN echo 'server { listen 8080; root /usr/share/nginx/html; index index.html; }' > /etc/nginx/conf.d/custom.conf
+
 COPY . /usr/share/nginx/html
 
-# Expõe a porta padrão do Nginx
-EXPOSE 80
+EXPOSE 8080
 
