@@ -1,0 +1,41 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+env:
+  IMAGE_NAME: personal-site
+  REGISTRY: ledharaujo
+  TAG: ${{ github.run_number }}
+
+jobs:
+  build_and_deploy_image:
+    name: Build and Push Image
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build docker image
+      run: docker build . --file Dockerfile --tag ${{ env.IMAGE_NAME }}:${{ env.TAG }}
+
+    - name: Push docker image
+      run: |
+        docker login --username ${{ secrets.HUB_USERNAME }} --password ${{ secrets.HUB_TOKEN }}
+        docker tag ${{ env.IMAGE_NAME }}:${{ env.TAG }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+
+    # - name: Update manifest
+    #   uses: appleboy/ssh-action@master
+    #   with:
+    #     host: ${{ secrets.HOST }}
+    #     username: root
+    #     key: ${{ secrets.DIGITALOCEAN_DROPLET_SSH_PRIVATE_KEY }}
+    #     script: |
+    #       cd ~/application/app-front
+    #       docker login --username ${{ secrets.HUB_USERNAME }} --password ${{ secrets.HUB_TOKEN }}
+    #       docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
+    #       sed -i "s|image: .*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}|" app-front-stack.yml
+    #       cat app-front-stack.yml
+    #       docker stack deploy -c app-front-stack.yml app_front
