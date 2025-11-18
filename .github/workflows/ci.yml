@@ -10,7 +10,7 @@ env:
   REGISTRY: ledharaujo
   TAG: ${{ github.run_number }}
   FILE: personal-site.yml
-  REPO: https://github.com/LeonardoHAraujo/manifests-swarm.git
+  REPO: github.com/leonardo/manifests-swarm.git
 
 jobs:
   build_and_deploy_image:
@@ -33,7 +33,7 @@ jobs:
 
     - name: Clone GitOps repository
       run: |
-        git clone {{ env.REPO }}
+        git clone https://x-access-token:${{ secrets.GITOPS_REPO_TOKEN }}@${{ env.REPO }} manifests-swarm
         cd manifests-swarm
         sed -i "s|image: .*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}|" ${{ env.FILE }}
 
