@@ -28,18 +28,15 @@ jobs:
         docker tag ${{ env.IMAGE_NAME }}:${{ env.TAG }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
 
-    - name: Update manifest in GitOps repo
+    - name: GitOps repo
       uses: actions/checkout@v4
 
-    - name: Clone GitOps repository
+    - name: GitOps Update manifest 
       run: |
         git clone https://x-access-token:${{ secrets.GITOPS_REPO_TOKEN }}@${{ env.REPO }} manifests-swarm
         cd manifests-swarm
         sed -i "s|image: .*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}|" ${{ env.FILE }}
-
-    - name: Commit manifest update
-      run: |
-        cd manifests-swarm
+        cat ${{ env.FILE }}
         git config user.email "ledharaujo@gmail.com"
         git config user.name "Leonardo Araújo"
         git add ${{ env.FILE }}
