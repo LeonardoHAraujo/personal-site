@@ -9,6 +9,8 @@ env:
   IMAGE_NAME: personal-site
   REGISTRY: ledharaujo
   TAG: ${{ github.run_number }}
+  FILE: personal-site.yml
+  REPO: https://github.com/LeonardoHAraujo/manifests-swarm.git
 
 jobs:
   build_and_deploy_image:
@@ -26,16 +28,20 @@ jobs:
         docker tag ${{ env.IMAGE_NAME }}:${{ env.TAG }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
         docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
 
-    # - name: Update manifest
-    #   uses: appleboy/ssh-action@master
-    #   with:
-    #     host: ${{ secrets.HOST }}
-    #     username: root
-    #     key: ${{ secrets.DIGITALOCEAN_DROPLET_SSH_PRIVATE_KEY }}
-    #     script: |
-    #       cd ~/application/app-front
-    #       docker login --username ${{ secrets.HUB_USERNAME }} --password ${{ secrets.HUB_TOKEN }}
-    #       docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}
-    #       sed -i "s|image: .*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}|" app-front-stack.yml
-    #       cat app-front-stack.yml
-    #       docker stack deploy -c app-front-stack.yml app_front
+    - name: Update manifest in GitOps repo
+      uses: actions/checkout@v4
+
+    - name: Clone GitOps repository
+      run: |
+        git clone {{ env.REPO }}
+        cd manifests-swarm
+        sed -i "s|image: .*/.*:.*|image: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.TAG }}|" ${{ env.FILE }}
+
+    - name: Commit manifest update
+      run: |
+        cd manifests-swarm
+        git config user.email "ledharaujo@gmail.com"
+        git config user.name "Leonardo Araújo"
+        git add ${{ env.FILE }}
+        git commit -m "Update site image to tag ${{ env.TAG }}"
+        git push https://x-access-token:${{ secrets.GITOPS_REPO_TOKEN }}@github.com/LeonardoHAraujo/manifests-swarm.git HEAD:main
